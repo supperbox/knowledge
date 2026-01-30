@@ -46,8 +46,20 @@ Vue 的 UI 基本单位是组件：
 
 ## 7. 动态组件与异步组件
 
-- 动态：`<component :is="Comp" />`
-- 异步：`defineAsyncComponent(() => import('./X.vue'))`
+- **动态组件**：`<component :is="Comp" />`，适用于标签页（Tabs）、插件化 UI。
+- **异步组件**：`defineAsyncComponent(() => import('./X.vue'))`
+
+### 7.1 异步组件的用途
+
+1. **性能优化（代码分割）**：
+   - 将超大组件（如富文本编辑器、复杂表格、数据看板）从主包中剥离。
+   - 只有在组件真正需要渲染时才向服务器请求文件，显著减小首屏 JS 体积。
+2. **处理“某些情况下”才出现的 UI**：
+   - 弹窗（Modal）、抽屉（Drawer）、侧边栏等。用户不点击，就永远不加载。
+3. **配合 Suspense 处理加载状态**：
+   - 可以设置 `loadingComponent`（加载中占位）和 `errorComponent`（加载失败显示）。
+4. **提升 FCP（首屏渲染速度）**：
+   - 优先加载页面的核心骨架，次要内容通过异步组件延后加载。
 
 ## 8. 常见坑
 
@@ -60,14 +72,16 @@ Vue 的 UI 基本单位是组件：
 
 ```vue
 <script setup lang="ts">
-const props = defineProps<{ modelValue: string }>()
-const emit = defineEmits<{ (e: 'update:modelValue', v: string): void }>()
+const props = defineProps<{ modelValue: string }>();
+const emit = defineEmits<{ (e: "update:modelValue", v: string): void }>();
 </script>
 
 <template>
   <input
     :value="props.modelValue"
-    @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+    @input="
+      emit('update:modelValue', ($event.target as HTMLInputElement).value)
+    "
   />
 </template>
 ```

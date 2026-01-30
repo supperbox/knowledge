@@ -9,7 +9,40 @@ Vue 3 的响应式系统用 `Proxy` 做依赖追踪：
 
 最终效果：数据变 -> 依赖它的计算属性/副作用/组件渲染自动更新。
 
-## 2. 何时用（选型）
+## 2. 核心原理：依赖收集如何进行？
+
+Vue 3 的响应式核心围绕 `targetMap` 这一全局容器展开，它的数据结构是：
+`WeakMap<target, Map<key, Set<Effect>>>`
+
+### ① 追踪 (Track) —— “谁在读我”
+
+- **触发时机**：当一个“副作用函数”（如组件渲染函数、`watchEffect`、`computed`）运行并访问响应式数据时，触发 `Proxy` 的 `get` 拦截。
+- **动作**：
+  1.  检查全局是否存在 `activeEffect`（当前正在运行的副作用）。
+  2.  如果有，则将该 `activeEffect` 存入 `targetMap` 中对应对象的对应字段下（即那个 `Set` 集合中）。
+- **目的**：建立“数据字段”与“依赖它的函数”之间的双向映射。
+
+### ② 触发 (Trigger) —— “我变了，通知大家”
+
+- **触发时机**：当对响应式数据进行修改时，触发 `Proxy` 的 `set` 拦截。
+- **动作**：
+  1.  去 `targetMap` 中找到该对象、该字段对应的所有 `Effect`。
+  2.  依次执行这些 `Effect` 函数。
+- **目的**：数据改变即刻引起所有依赖方的重运行。
+
+### ③ 模板中的依赖收集：双括号 `{{ }}`
+
+虽在模板中书写，但本质是渲染函数执行时的**属性访问**：
+
+1.  **编译**：`<div>{{ msg }}</div>` 被编译为 `_toDisplayString(_ctx.msg)`。
+2.  **绑定**：组件挂载时会创建一个“渲染 Effect”（负责更新组件的函数）。
+3.  **触发**：当渲染函数执行到 `_ctx.msg` 时，访问了 `Proxy` 的属性，触发 `get`。
+4.  **关联**：渲染 Effect 被存入 `msg` 的依赖名单。
+5.  **更新**：后续 `msg` 变化时，Vue 会通过名单重新调用该渲染函数，从而更新界面。
+
+---
+
+## 3. 何时用（选型）
 
 - 局部状态：用 `ref`/`reactive`
 - 派生状态：用 `computed`
@@ -49,16 +82,16 @@ Vue 3 的响应式系统用 `Proxy` 做依赖追踪：
 ## 6. 最小示例
 
 ```ts
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch } from "vue";
 
-const count = ref(0)
-const state = reactive({ items: [] as string[] })
+const count = ref(0);
+const state = reactive({ items: [] as string[] });
 
-const itemCount = computed(() => state.items.length)
+const itemCount = computed(() => state.items.length);
 
 watch(count, (n, o) => {
   // 适合写：请求、日志、和外部系统同步
-})
+});
 ```
 
 ## 7. 实战建议
