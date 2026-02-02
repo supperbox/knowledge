@@ -34,14 +34,14 @@
 - setup store（推荐，TS 更好）：
 
 ```ts
-export const useUserStore = defineStore('user', () => {
-  const token = ref('')
-  const isLogin = computed(() => !!token.value)
+export const useUserStore = defineStore("user", () => {
+  const token = ref("");
+  const isLogin = computed(() => !!token.value);
   function setToken(v: string) {
-    token.value = v
+    token.value = v;
   }
-  return { token, isLogin, setToken }
-})
+  return { token, isLogin, setToken };
+});
 ```
 
 ### 持久化（常见需求）
@@ -56,7 +56,57 @@ export const useUserStore = defineStore('user', () => {
 - store 相互引用形成循环依赖：
   - 抽离公共逻辑或用 service 层解耦
 
-## 3. 路由 + Pinia 的典型组合
+## 3. 路由代码示例
+
+### 3.1 路由配置 (router/index.ts)
+
+```ts
+import { createRouter, createWebHistory } from "vue-router";
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    {
+      path: "/",
+      component: () => import("../views/Home.vue"),
+    },
+    {
+      path: "/user/:id", // 动态路由
+      name: "user",
+      component: () => import("../views/User.vue"),
+      props: true, // 将路由参数作为 props 传递给组件
+    },
+  ],
+});
+```
+
+### 3.2 组件内使用
+
+```vue
+<script setup>
+import { useRoute, useRouter } from "vue-router";
+
+const route = useRoute(); // 获取当前路由信息（只读参数）
+const router = useRouter(); // 获取路由实例（执行跳转动作）
+
+// 获取动态参数 :id
+console.log(route.params.id);
+
+const goToHome = () => {
+  router.push("/"); // 编程式导航
+};
+</script>
+
+<template>
+  <div>
+    <!-- 声明式导航 -->
+    <router-link to="/">回首页</router-link>
+    <button @click="goToHome">JS 跳转</button>
+  </div>
+</template>
+```
+
+## 4. 路由 + Pinia 的典型组合
 
 - 守卫中读 userStore 判断登录
 - 页面组件只负责展示与交互，数据请求封装在 actions 或 service

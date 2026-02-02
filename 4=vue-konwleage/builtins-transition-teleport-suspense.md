@@ -69,18 +69,55 @@
 ## 4. 最小示例
 
 ```vue
+<script setup>
+import { ref } from "vue";
+
+// 定义响应式变量控制 Transition 示例的显示/隐藏
+const show = ref(true);
+</script>
+
 <template>
+  <!-- 1. Transition 示例：处理单个元素进入/离开的过渡动画 -->
+  <!-- name="fade" 会对应 CSS 中的 .fade-enter-active 等类名 -->
+  <button @click="show = !show">切换动画</button>
+  <Transition name="fade">
+    <p v-if="show">我会淡入淡出</p>
+  </Transition>
+
+  <!-- 2. Teleport 示例：将内容“传送”到指定的 DOM 节点 -->
+  <!-- 即使该组件在层级深处，内容也会被挂载到 body 下，解决 Z-Index 遮挡问题 -->
   <Teleport to="body">
-    <div class="modal">弹窗内容</div>
+    <div class="modal">我是被传送到 Body 的弹窗内容</div>
   </Teleport>
 
+  <!-- 3. Suspense 示例：管理异步组件/异步 setup 的加载状态 -->
   <Suspense>
+    <!-- default 插槽：放置最终要渲染的异步内容 -->
     <template #default>
       <AsyncComp />
     </template>
+
+    <!-- fallback 插槽：放置加载过程中的占位 UI -->
     <template #fallback>
-      <div>加载中...</div>
+      <div>组件加载中，请稍候...</div>
     </template>
   </Suspense>
 </template>
+
+<style>
+/* Transition 核心 CSS 类名说明： */
+
+/* 进入动画和离开动画的生效状态（定义持续时间、延迟、曲线） */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+/* 1. fade-enter-from：进入前的初始状态 */
+/* 2. fade-leave-to：离开后的结束状态 */
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
 ```
