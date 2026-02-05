@@ -71,6 +71,52 @@ const onSelect = useCallback((id: string) => setSelected(id), []);
 
 注意：不要为“所有函数”都 useCallback，缓存也有成本。
 
+#### 深入理解 useCallback
+
+`useCallback` 的核心作用是缓存函数引用，避免因函数重新创建导致的子组件不必要渲染或副作用重新执行。
+
+- **为什么需要 useCallback？**
+  在 React 中，每次组件重新渲染时，函数都会被重新创建。如果这些函数被传递给子组件，可能会导致子组件的 `React.memo` 失效，或者触发不必要的副作用。
+
+- **useCallback 和 useMemo 的区别**
+  - `useCallback` 是专门用于缓存函数的。
+  - `useMemo` 是用于缓存计算结果的。
+
+#### 示例：避免子组件重复渲染
+
+```tsx
+const Parent = () => {
+  const [count, setCount] = useState(0);
+
+  const increment = useCallback(() => setCount((prev) => prev + 1), []);
+
+  return (
+    <div>
+      <button onClick={increment}>Increment</button>
+      <Child onClick={increment} />
+    </div>
+  );
+};
+
+const Child = React.memo(({ onClick }: { onClick: () => void }) => {
+  console.log("Child rendered");
+  return <button onClick={onClick}>Child Button</button>;
+});
+```
+
+在上面的例子中，如果不使用 `useCallback`，`increment` 函数在每次 `Parent` 组件重新渲染时都会被重新创建，导致 `Child` 组件也会重新渲染。通过 `useCallback`，`increment` 的引用保持稳定，`Child` 组件不会重复渲染。
+
+#### 注意事项
+
+1. **缓存的成本**：
+   - `useCallback` 本身也有性能开销，只有在函数传递给子组件或作为依赖时才需要使用。
+
+2. **依赖数组的正确性**：
+   - 确保依赖数组中包含所有函数内部使用的外部变量，否则可能导致逻辑错误。
+
+3. **与 React.memo 配合**：
+   - `useCallback` 通常与 `React.memo` 一起使用，避免子组件不必要的渲染。
+
 ## 4. useRef：跨渲染存值 / 访问 DOM
 
 ### 4.1 访问 DOM

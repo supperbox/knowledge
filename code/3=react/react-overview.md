@@ -10,10 +10,58 @@ $$UI = f(state)$$
 
 ## 2. React 的核心“心智模型”
 
-### 2.1 声明式 + 组件化
+### 2.1 声明式 (Declarative) 与 命令式 (Imperative)
 
-- **声明式**：你描述“结果应该是什么样”，而不是手写 DOM 更新步骤。
-- **组件化**：把 UI 切分为可组合的函数（组件），每个组件聚焦一个职责。
+- **命令式 (How)**：你需要告诉计算机每一步该怎么做。
+  - _例子_：去餐厅吃饭，你进厨房告诉厨师：“先开火，把锅烧热，倒油，把鸡蛋打碎放进去翻炒，加盐，出锅。”
+  - _代码体现_：手动操作 DOM（`document.createElement`, `appendChild`, `input.value = ''`）。
+- **声明式 (What)**：你只需要告诉计算机“我想要什么结果”。
+  - _例子_：去餐厅吃饭，你只需要看菜单对服务员说：“我要一份西红柿炒鸡蛋。”具体的烹饪过程由厨师（React）负责。
+  - _代码体现_：通过状态（State）描述 UI。
+
+#### 深度理解声明式：
+
+1. **降低心智负担**：你只需要维护状态（State），React 会自动处理从“旧状态”到“新状态”的视图变动。不再需要写复杂的逻辑来同步 DOM 内容（比如“点击按钮后，隐藏 A 元素，显示 B 元素并清空输入框”）。
+2. **UI 是状态的投影**：在 React 中，UI 就像是拍摄状态在某一时刻的照片。不管状态如何变化，只要状态确定，输出的 UI 也是确定的。
+
+#### 代码对比：
+
+**命令式（原生 JS）**
+
+```js
+// 逻辑散落在事件监听器中，手动操作 DOM
+const btn = document.getElementById("btn");
+btn.onclick = () => {
+  const content = document.getElementById("content");
+  content.innerText = "正在加载...";
+  fetchData().then((data) => {
+    content.innerText = data;
+    content.style.color = "blue";
+  });
+};
+```
+
+**声明式（React）**
+
+```tsx
+// 只需定义“加载中”和“成功后”的状态，视图全自动响应
+const [data, setData] = useState(null);
+const [loading, setLoading] = useState(false);
+
+const load = async () => {
+  setLoading(true);
+  setData(await fetchData());
+  setLoading(false);
+};
+
+return <div style={{ color: "blue" }}>{loading ? "正在加载..." : data}</div>;
+```
+
+---
+
+### 2.2 组件化 (Component-based)
+
+- 把 UI 切分为可组合的函数（组件），每个组件聚焦一个职责。
 
 ### 2.2 单向数据流
 
